@@ -23,11 +23,11 @@ cd "$ss"
 echo 
 echo $file
 mkvmerge -I "$file"
-audio=$(mkvmerge -I "$file" | sed -ne '/^Track ID [0-9]*: audio .* language:\(por\|eng\|jpn\|und\).*/ { s/^[^0-9]*\([0-9]*\):.*/\1/;H }; $ { g;s/[^0-9]/,/g;s/^,//;p }')
+audio=$(mkvmerge -I "$file" | fgrep -v TrueHD | sed -ne '/^Track ID [0-9]*: audio .* language:\(por\|eng\|und\).*/ { s/^[^0-9]*\([0-9]*\):.*/\1/;H }; $ { g;s/[^0-9]/,/g;s/^,//;p }')
 audiocount=$(echo $audio | tr "," "\n" | wc -l)
 echo "1: found $audio ($audiocount) to keep"
     
-subs=$(mkvmerge -I "$file" | sed -ne '/^Track ID [0-9]*: subtitles [(HDMV\/PGS)|(VobSub)|(SubRip\/SRT)].* language:\(por\|eng\).*/ { s/^[^0-9]*\([0-9]*\):.*/\1/;H }; $ { g;s/[^0-9]/,/g;s/^,//;p }')
+subs=$(mkvmerge -I "$file" | sed -ne '/^Track ID [0-9]*: subtitles (SubRip\/SRT).* language:\(por\|eng\|und\).*/ { s/^[^0-9]*\([0-9]*\):.*/\1/;H }; $ { g;s/[^0-9]/,/g;s/^,//;p }')
 subscount=$(echo $subs | tr "," "\n" | wc -l)
 echo "2: found $subs ($subscount) to keep"
         
@@ -71,4 +71,4 @@ else
     #fi
   fi				
 fi
- 
+
