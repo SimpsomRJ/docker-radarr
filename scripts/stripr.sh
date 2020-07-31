@@ -18,7 +18,7 @@ cd "$ss"
 echo
 date
 
-if [ ! -r "$fpath" ] then 
+if [ ! -r "$file" ] ; then 
   echo 'Cannot read "$fpath"'
   exit 1
 fi
@@ -28,11 +28,11 @@ DETAILS=$(mkvmerge -J "$file")
 echo "$DETAILS"
 
 audio=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | select (.codec | test("truehd"; "i") | not) | .id] | map(tostring) | join(",")' | cut -f2 -d\")
-audiocount=$(echo $audio | tr "," "\n" | wc -l)
+audiocount=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | select (.codec | test("truehd"; "i") | not) | .id' | wc -l)
 echo "1: Found audio tracks $audio ($audiocount) to keep"
 
 subs=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="subtitles" and (.codec | test("srt"; "i")) and (.properties.language | test("eng|por|und"))) | .id] | map(tostring) | join(",")' | cut -f2 -d\")
-subscount=$(echo $subs | tr "," "\n" | wc -l)
+subscount=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="subtitles" and (.codec | test("srt"; "i")) and (.properties.language | test("eng|por|und"))) | .id'| wc -l)
 echo "2: Found subtitle tracks $subs ($subscount) to keep"
 
 totalaudio=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio") | .id' | wc -l)
@@ -41,23 +41,28 @@ totalsubs=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="subtitles") | .id'
 diffaudio=$(expr $totalaudio - $audiocount)
 diffsubs=$(expr $totalsubs - $subscount)
 
-if [[ ( -z "$audio" && -z "$subs" ) || ( $diffaudio -eq 0 && $diffsubs -eq 0 ) ]] ; then
-  echo "3: Nothing to remove. Will exit script now."
-elif [ -z "$audio" ] || [ $diffaudio -eq 0 ] ; then
+echo "3: setting parameters"
+
+if [ -z "$subs" ]
+then  
+  subs="-S"
+else  
   subs="-s $subs"
+fi
+
+if [ -z "$audio" ] ; then
   mkvmerge $subs -o "${file%.mkv}".edited.mkv "$file"; #keep Orignal audio
   mv "${file%.mkv}".edited.mkv "$file"
-  echo "4: Kept orginal audio. Unwanted Subtitles found and removed!"
+  echo "4: PGS/ASS/VobSub Subtitles found and removed!"
 else
-  if [ -z "$subs" ] || [ $diffsubs -eq 0 ] ; then
-    subs="-S"
+  if [ $diffaudio -gt 0 -o $diffsubs -gt 0 ] ; then
+    audio="-a $audio";
+    mkvmerge $subs $audio -o "${file%.mkv}".edited.mkv "$file";
+    mv "${file%.mkv}".edited.mkv "$file"
+    echo "4: Unwanted audio or subtitles found and removed!"        
   else
-    subs="-s $subs"
-  fi
-  audio="-a $audio";
-  mkvmerge $subs $audio -o "${file%.mkv}".edited.mkv "$file";
-  mv "${file%.mkv}".edited.mkv "$file"
-  echo "5: Unwanted audio and/or subtitles found and removed!"
+    echo "4: Nothing found to remove. Will exit script now."
+  fi          
 fi
 
 exit
