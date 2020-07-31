@@ -7,5 +7,5 @@ RUN apt-get -y update
 RUN apt-get -y install mkvtoolnix
 RUN mkdir /scripts
 COPY scripts/ /scripts
-RUN chmod 755 /scripts/stripr.sh
+RUN chmod 755 /scripts/*.sh
 RUN apt-get -y upgrade && apt-get -y clean && apt-get -y --purge autoremove
