@@ -17,6 +17,12 @@ cd "$ss"
 
 echo
 date
+
+if [ ! -r "$fpath" ] then 
+  echo 'Cannot read "$fpath"'
+  exit 1
+fi
+
 echo $file
 DETAILS=$(mkvmerge -J "$file")
 echo "$DETAILS"
@@ -29,21 +35,21 @@ subs=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="subtitles" and (.codec
 subscount=$(echo $subs | tr "," "\n" | wc -l)
 echo "2: Found subtitle tracks $subs ($subscount) to keep"
 
-#totalaudio=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio") | .id' | wc -l)
-#totalsubs=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="subtitles") | .id' | wc -l)
+totalaudio=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio") | .id' | wc -l)
+totalsubs=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="subtitles") | .id' | wc -l)
 
-#diffaudio=$(expr $totalaudio - $audiocount)
-#diffsubs=$(expr $totalsubs - $subscount)
+diffaudio=$(expr $totalaudio - $audiocount)
+diffsubs=$(expr $totalsubs - $subscount)
 
-if [ -z "$audio" ] && [ -z "$subs" ] ; then
+if [[ ( -z "$audio" && -z "$subs" ) || ( $diffaudio -eq 0 && $diffsubs -eq 0 ) ]] ; then
   echo "3: Nothing to remove. Will exit script now."
-elif [ -z "$audio" ] ; then
+elif [ -z "$audio" ] || [ $diffaudio -eq 0 ] ; then
   subs="-s $subs"
   mkvmerge $subs -o "${file%.mkv}".edited.mkv "$file"; #keep Orignal audio
   mv "${file%.mkv}".edited.mkv "$file"
   echo "4: Kept orginal audio. Unwanted Subtitles found and removed!"
 else
-  if [ -z "$subs" ] ; then
+  if [ -z "$subs" ] || [ $diffsubs -eq 0 ] ; then
     subs="-S"
   else
     subs="-s $subs"
