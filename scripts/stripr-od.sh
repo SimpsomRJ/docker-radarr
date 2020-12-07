@@ -27,8 +27,10 @@ echo $file
 DETAILS=$(mkvmerge -J "$file")
 echo "$DETAILS"
 
-audio=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | select (.codec | test("truehd"; "i") | not) | .id] | map(tostring) | join(",")' | cut -f2 -d\")
-audiocount=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | select (.codec | test("truehd"; "i") | not) | .id' | wc -l)
+#audio=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | select (.codec | test("truehd"; "i") | not) | .id] | map(tostring) | join(",")' | cut -f2 -d\")
+#audiocount=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | select (.codec | test("truehd"; "i") | not) | .id' | wc -l)
+audio=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | .id] | map(tostring) | join(",")' | cut -f2 -d\")
+audiocount=$(echo "$DETAILS" | jq '.tracks[] | select (.type=="audio" and (.properties.language | test("eng|por|und"))) | .id' | wc -l)
 echo "1: Found audio tracks $audio ($audiocount) to keep"
 
 subs=$(echo "$DETAILS" | jq '[.tracks[] | select (.type=="subtitles" and (.codec | test("srt"; "i")) and (.properties.language | test("eng|por|und"))) | .id] | map(tostring) | join(",")' | cut -f2 -d\")
