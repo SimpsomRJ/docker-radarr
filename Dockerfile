@@ -6,4 +6,3 @@ RUN apk update && \
 RUN mkdir /scripts
 COPY scripts/ /scripts
 RUN chmod 755 /scripts/*.sh
-RUN apt-get -y upgrade && apt-get -y clean && apt-get -y --purge autoremove
